@@ -5,6 +5,26 @@ import psycopg2
 from disco.bot import Plugin
 from disco.types.message import MessageTable
 
+JOB_EMOJIS = [
+  'pld:612795608083988480',
+  'war:612798409589391390',
+  'drk:612795608192778291',
+  'gnb:612795608217944064',
+  'whm:612798823349354537',
+  'sch:612795608171937801',
+  'ast:612795607903371264',
+  'mnk:612795607987519558',
+  'drg:612795608159354894',
+  'nin:612795608050171938',
+  'sam:612795608092377088',
+  'mch:612795608453087245',
+  'brd:612795608239046707',
+  'dnc:612795607756832774',
+  'blm:612795608029462528',
+  'smn:612798846803902465',
+  'rdm:612795607811358721'
+]
+
 
 class SignupPlugin(Plugin):
     def load(self, ctx):
@@ -42,14 +62,13 @@ class SignupPlugin(Plugin):
         if config is None:
             event.msg.reply("I'm not configured! Please set up your channels first.")
 
-        if event.msg.channel != config[1]:
-            event.msg.reply("Sorry, that command can't be run from that channel")
-
         confirm_message = event.msg.reply(
-            "You're creating an event named {} that requires {} tanks, {} healers, and {} dps. Your custom message is \n\n{}\n\nReact with <:greentick:326519582657609728> if correct.".format(
+            "You're creating an event named {} that requires {} tanks, {} healers, and {} dps. Your custom message is \n\n{}\n\nReact to confirm.".format(
                 name, tanks, healers, dps, message
             )
         )
+
+        confirm_message.add_reaction('greentick:612799716161486888')
         cur = self.database.cursor()
         cur.execute(
             "insert into events values(%s, %s, %s, %s, %s, %s, %s, %s)", (
@@ -66,18 +85,21 @@ class SignupPlugin(Plugin):
         if e is None:
             return
 
-        if event.emoji.id == 326519582657609728:
+        if event.emoji.id == 612799716161486888 and event.user_id != 612451478485073925:
             cur.execute(
                 "update events set confirmed = true where events.id = {}".format(e[0])
             )
             self.database.commit()
             admin_channel = self.client.api.channels_get(event.channel_id)
+            event_message = self.client.api.channels_messages_get(event.channel_id, e[0])
             admin_channel.send_message(
-                "Event confirmed! React with <:cheer:612778926640726024> to announce it to your announcement channel."
+                "Event confirmed! React again with the cheer to announce it to your announcement channel."
             )
+            event_message.add_reaction('cheer:612778926640726024')
+
             return
 
-        if event.emoji.id == 612778926640726024 and e[6] is True and e[7] is False:
+        if event.emoji.id == 612778926640726024 and event.user_id != 612451478485073925 and e[6] is True:
             admin_channel = self.client.api.channels_get(event.channel_id)
 
             admin_channel.send_message("Announcing your event!")
@@ -89,9 +111,12 @@ class SignupPlugin(Plugin):
             channel_id = cur.fetchone()[0]
 
             announce_channel = self.client.api.channels_get(channel_id)
-            announce_channel.send_message("{} - {}".format(e[1], e[2]))
+            announcement = announce_channel.send_message("{} - {}\n\n React to this message to sign up!".format(e[1], e[2]))
             cur.execute(
-                "update events set announced = true where events.id = {}".format(e.id)
+                "update events set announced = true where events.id = {}".format(e[0])
             )
             self.database.commit()
+
+            for emoji in JOB_EMOJIS:
+              announcement.add_reaction(emoji)
 
