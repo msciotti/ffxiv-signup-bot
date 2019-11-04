@@ -87,5 +87,5 @@ virtualenv==16.3.0
 virtualenv-clone==0.3.0
 virtualenvwrapper==4.8.2
 websocket-client==0.44.0
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 zipp==0.3.3
