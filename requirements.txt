@@ -45,7 +45,7 @@ meld3==1.0.2
 mock==3.0.5
 nodeenv==1.3.3
 numpy==1.16.0
-opencv-python==4.0.0.21
+opencv-python==4.1.1.26
 pathlib2==2.3.3
 pbr==4.0.3
 pefile==2018.8.8
